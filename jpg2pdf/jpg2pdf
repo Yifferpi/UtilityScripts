@@ -1,0 +1,79 @@
+#! /usr/bin/env python3
+
+import sys
+import os
+import codecs
+import datetime
+import argparse
+
+#use imghdr to determine whether image is contained in file given
+#jpg2pdf dir pdfname_base
+#=======================================================
+
+#Parsing input
+parser = argparse.ArgumentParser()
+parser.add_argument("input", help="File to be processed")
+parser.add_argument("-nd", "--nodate", action='store_false', dest='setdate', help="Omit inserting current date")
+parser.add_argument("-o", metavar='output', dest='output',  help="Set the name of the output file")
+parser.add_argument("-t", metavar='title', dest='title', help="Set a title inside the document")
+args = parser.parse_args()
+
+#==========================================================
+
+def writeMarkdown(imagename):
+    tmp_file = "tmp.md"
+    #Check if file is an image
+    if not imagename.endswith("jpg"):
+        print("File must be a .jgp!")
+        exit(1)
+
+    #Create temporary file
+    mdfile = codecs.open(tmp_file, 'w', 'utf-8')
+
+    #Write file according to args
+    if args.title is not None:
+        mdfile.write("#" + args.title + "\n")
+    if args.setdate:
+        mdfile.write("Datum: " + str(datetime.date.today()) + "\n\n")
+    mdfile.write("![Quittung](" + imagename + "){ width=60% }\n")
+    mdfile.close()
+    return tmp_file
+    
+#==================================================
+
+#Converts tmp.md to a pdf named filename and removes the tmp.md
+
+def convertToPdf(filename):
+    #Create pandoc command and execute it
+    pandoc_cmd = "pandoc -s -f markdown+link_attributes -o " + filename
+    pandoc_cmd = pandoc_cmd + " tmp.md"
+    os.system(pandoc_cmd)
+    os.remove("tmp.md")
+
+#===================================================
+#Main
+if os.path.isfile(args.input):
+    writeMarkdown(args.input)
+    convertToPdf()
+    print("finished")
+    exit(0)
+
+#Adjust name of file so output is not overwritten
+if os.path.isdir(args.input):
+    os.chdir(args.input)
+    print("Path: " + os.getcwd())
+    files = os.listdir(".")
+    nr = 0
+    #multiple files does not work with title yet     
+    for f in files:
+        if f.endswith(".jpg"):
+            writeMarkdown(f)
+            if args.output is not None:
+                convertToPdf(args.output + str(nr) + ".pdf") 
+            else:
+                convertToPdf(f.split('.')[0] + ".pdf")
+            nr = nr + 1
+            print("converted " + f)
+    print("Converted " + str(nr) + " files")
+
+

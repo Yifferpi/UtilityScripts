@@ -1,0 +1,7 @@
+%Betrag: 200.00CHF
+%Gruppe: Adler
+%Kontostand: 398.70CHF
+
+%Pfadiname: Solex
+%Name: Jan Schild
+
