@@ -3,10 +3,14 @@
 import argparse
 import requests
 import bs4
+import os
+import datetime
+import pytz
+from dateutil.parser import parse
 from urllib.parse import urljoin
 from getpass import getpass
 
-#=======================================
+#=======Arguments================================
 parser = argparse.ArgumentParser("Scrape all pdfs from a given URL")
 parser.add_argument('url', help="URL of the website to scrape")
 parser.add_argument('-i', '--interactive', action='store_true', help="Use Credentials interactive")
@@ -14,7 +18,7 @@ parser.add_argument('-k', '--keyword', help="Only fetch pdfs with this keyword i
 parser.add_argument('-a', '--available', action='store_true', help="Only list all pdfs that would be downloaded")
 args = parser.parse_args()
 
-#==========================================
+#=======Acquire and filter===================================
 
 def get_links():
     links = []
@@ -30,52 +34,98 @@ def get_links():
         links.append(urljoin(args.url, e.get('href')))
     return links
 
-def filter_links(links):
-    links = [x for x in links if (x is not None) and x.endswith(".pdf")]
+def pdffilter(links):
+    tmp = [x for x in links if (x is not None) and x.endswith(".pdf")]
     if args.keyword is not None:
-        links = [x for x in links if args.keyword in x.split('/')[-1]]
-    return links
+        tmp = [x for x in tmp if args.keyword in x.split('/')[-1]]
+    return tmp
+
+def updatablefilter(links):
+    return [x for x in links if nonexistent_or_updatable(x)]
+
+def nonexistent_or_updatable(linktofile):
+    filename = linktofile.split('/')[-1]
+    if os.path.isfile(filename):
+
+        filetime = datetime.datetime.fromtimestamp(os.path.getmtime(filename))
+        zone = pytz.timezone('Europe/Zurich')
+        filetime = zone.localize(filetime)
+        r = None
+        try:
+            if cred is None:
+                r = requests.head(linktofile)
+            else:
+                r = requests.head(linktofile, auth=cred)
+            r.raise_for_status()
+        except requests.exceptions.HTTPError as err:
+            print(err)
+            return False
+        urltime = parse(r.headers['Last-Modified'])
+
+        if urltime < filetime:
+            print(filename + " already exists and is up-to-date")
+            return False
+    return True
+
+
+
+
+
+
+#=======Print or download======================================
 
 def print_links(links):
     print("Found " + str(len(links)) + " pdf files:")
     for l in links:
         print(l.split('/')[-1])
 
-#Something buggy here... ValueError in reqest.get(l, cred)
-def download_links(links, cred=None):
+def download_links(links):
+    links = updatablefilter(links)
     numSucc = 0
     for l in links:
-        r = None
+        filename = l.split('/')[-1]
+        content = None
         try:
-            if cred is None:
-                r = requests.get(l)
-            else:
-                r = requests.get(l, cred)
-            r.raise_for_status()
+            content = download_file(l, cred)
         except requests.exceptions.HTTPError as err:
             print(err)
-            if response.status_code == requests.codes.unauthorized:
-                print("Use the -i flag for interactive credentials")
+            print(filename + " could not be downloaded")
             continue
         numSucc = numSucc + 1
-        name = l.split('/')[-1]
-        pdf = open(name, 'wb')
-        pdf.write(r.content)
+
+        print("Successfully downloaded " + filename)
+        pdf = open(filename, 'wb')
+        pdf.write(content)
         pdf.close()
+
+    print("Successful downloads: " + str(numSucc) + " out of " + str(len(links)))
     return numSucc
 
-#Get credentials if required
+def download_file(link, cred = None):
+    r = None
+    if cred is None:
+        r = requests.get(link)
+    else:
+        r = requests.get(link, auth=cred)
+    r.raise_for_status()
+    return r.content
+
+
+
+#=======Main====================================================
+#Global
 cred = None
 if args.interactive:
     user = input("Username: ")
     passwd = getpass()
     cred = (user, passwd)
 
-links = filter_links(get_links())
+links_all = get_links()
+links_onlypdf = pdffilter(links_all)
 
 if args.available:
-    print_links(links)
+    print_links(links_onlypdf)
 else:
-    n = download_links(links, cred)
-    print("Successful downloads: " + str(n) + " out of " + str(len(links)))
+    download_links(links_onlypdf)
+
 
