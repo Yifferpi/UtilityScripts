@@ -10,6 +10,10 @@ from dateutil.parser import parse
 from urllib.parse import urljoin
 from getpass import getpass
 
+#Todo: accept file as input
+#Todo: instead of url, read from stdin
+#Todo: handle case when different pdfs have the same name, only differ in url
+
 #=======Arguments================================
 parser = argparse.ArgumentParser("Scrape all pdfs from a given URL")
 parser.add_argument('url', help="URL of the website to scrape")
@@ -40,9 +44,11 @@ def pdffilter(links):
         tmp = [x for x in tmp if args.keyword in x.split('/')[-1]]
     return tmp
 
+#remove this function and check on the fly
 def updatablefilter(links):
     return [x for x in links if nonexistent_or_updatable(x)]
 
+#Make only updatable function()
 def nonexistent_or_updatable(linktofile):
     filename = linktofile.split('/')[-1]
     if os.path.isfile(filename):
@@ -66,10 +72,6 @@ def nonexistent_or_updatable(linktofile):
             print(filename + " already exists and is up-to-date")
             return False
     return True
-
-
-
-
 
 
 #=======Print or download======================================
