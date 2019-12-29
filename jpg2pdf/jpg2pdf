@@ -54,7 +54,7 @@ def convertToPdf(filename):
 #Main
 if os.path.isfile(args.input):
     writeMarkdown(args.input)
-    convertToPdf()
+    convertToPdf("tmp.md")
     print("finished")
     exit(0)
 
