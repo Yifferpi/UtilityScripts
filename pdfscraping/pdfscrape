@@ -10,7 +10,7 @@ from dateutil.parser import parse
 from urllib.parse import urljoin
 from getpass import getpass
 
-#Todo: accept file as input
+#Todo: accept file as input, containing urls, triggered by flag
 #Todo: instead of url, read from stdin
 #Todo: handle case when different pdfs have the same name, only differ in url
 
@@ -24,31 +24,29 @@ args = parser.parse_args()
 
 #=======Acquire and filter===================================
 
-def get_links():
-    links = []
+def get_pdflinks(url):
     response = None
     try:
-        response = requests.get(args.url)
+        response = requests.get(url)
         response.raise_for_status()
     except requests.exceptions.HTTPError as err:
         print(err)
         exit(1)
     soup = bs4.BeautifulSoup(response.content, 'html.parser')
+
+    links = []
     for e in soup.find_all('a'):
-        links.append(urljoin(args.url, e.get('href')))
+        if e.get('href').endswith(".pdf"):
+            links.append(urljoin(url, e.get('href')))
     return links
 
-def pdffilter(links):
-    tmp = [x for x in links if (x is not None) and x.endswith(".pdf")]
-    if args.keyword is not None:
-        tmp = [x for x in tmp if args.keyword in x.split('/')[-1]]
-    return tmp
+# Set of filter functions
+def filter_links_for_keyword(links, keyword):
+    links = [x for x in links if keyword in x.split('/')[-1]]
+def filter_links_for_updatable(links):
+    links = [x for x in links if nonexistent_or_updatable(x)]
 
-#remove this function and check on the fly
-def updatablefilter(links):
-    return [x for x in links if nonexistent_or_updatable(x)]
-
-#Make only updatable function()
+# decides for an url, if the pdf at that url should be downloaded or not
 def nonexistent_or_updatable(linktofile):
     filename = linktofile.split('/')[-1]
     if os.path.isfile(filename):
@@ -81,10 +79,10 @@ def print_links(links):
     for l in links:
         print(l.split('/')[-1])
 
-def download_links(links):
-    links = updatablefilter(links)
+def download_links(links, cred=None):
     numSucc = 0
     for l in links:
+
         filename = l.split('/')[-1]
         content = None
         try:
@@ -93,9 +91,9 @@ def download_links(links):
             print(err)
             print(filename + " could not be downloaded")
             continue
-        numSucc = numSucc + 1
 
         print("Successfully downloaded " + filename)
+        numSucc = numSucc + 1
         pdf = open(filename, 'wb')
         pdf.write(content)
         pdf.close()
@@ -103,7 +101,8 @@ def download_links(links):
     print("Successful downloads: " + str(numSucc) + " out of " + str(len(links)))
     return numSucc
 
-def download_file(link, cred = None):
+#this should be simplified to not use an if statement.
+def download_file(link, cred=None):
     r = None
     if cred is None:
         r = requests.get(link)
@@ -112,22 +111,27 @@ def download_file(link, cred = None):
     r.raise_for_status()
     return r.content
 
-
-
 #=======Main====================================================
-#Global
-cred = None
-if args.interactive:
-    user = input("Username: ")
-    passwd = getpass()
-    cred = (user, passwd)
+def main():
 
-links_all = get_links()
-links_onlypdf = pdffilter(links_all)
+    cred = None
+    links = get_pdflinks(args.url)
 
-if args.available:
-    print_links(links_onlypdf)
-else:
-    download_links(links_onlypdf)
+    if args.interactive:
+        user = input("Username: ")
+        passwd = getpass()
+        cred = (user, passwd)
 
-
+    if args.keyword not None:
+        filter_links_for_keyword(links, args.keyword)
+   
+    if args.available:
+        print_links(links)
+    else:
+        #before downloading, make sure duplicate names on the site are handled
+        filter_links_for_updatable(links)
+        download_links(links)
+    
+   
+if __name__ == "__main__":
+    main()
