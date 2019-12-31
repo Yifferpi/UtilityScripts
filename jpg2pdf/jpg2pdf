@@ -6,74 +6,61 @@ import codecs
 import datetime
 import argparse
 
-#use imghdr to determine whether image is contained in file given
-#jpg2pdf dir pdfname_base
+#Todo: decide filetype based on header rather than suffix
 #=======================================================
 
 #Parsing input
 parser = argparse.ArgumentParser()
-parser.add_argument("input", help="File to be processed")
-parser.add_argument("-nd", "--nodate", action='store_false', dest='setdate', help="Omit inserting current date")
-parser.add_argument("-o", metavar='output', dest='output',  help="Set the name of the output file")
+parser.add_argument("input", help="File to be processed", nargs='+')
+parser.add_argument("--nodate", action='store_false', dest='setdate', help="Omit inserting current date")
+parser.add_argument("-o", metavar='output', dest='output',  help="Set the name of the output file, doesn't work with multiple files, if not specified, imagename will be used")
 parser.add_argument("-t", metavar='title', dest='title', help="Set a title inside the document")
 args = parser.parse_args()
 
 #==========================================================
 
-def writeMarkdown(imagename):
-    tmp_file = "tmp.md"
-    #Check if file is an image
+def writeMarkdown(imagename, tmpname):
+
+    #Check for errors
+    if not os.path.isfile(imagename):
+        print("File " + imagename + " not found!")
+        return False
     if not imagename.endswith("jpg"):
         print("File must be a .jgp!")
-        exit(1)
+        return False
 
     #Create temporary file
-    mdfile = codecs.open(tmp_file, 'w', 'utf-8')
-
-    #Write file according to args
-    if args.title is not None:
-        mdfile.write("#" + args.title + "\n")
-    if args.setdate:
-        mdfile.write("Datum: " + str(datetime.date.today()) + "\n\n")
-    mdfile.write("![Quittung](" + imagename + "){ width=60% }\n")
-    mdfile.close()
-    return tmp_file
+    with codecs.open(tmpname, 'w', 'utf-8') as f:
+        #Write file according to args
+        if args.title is not None: 
+            f.write("#" + args.title + "\n")
+        if args.setdate:
+            f.write("Datum: " + str(datetime.date.today()) + "\n\n")
+        f.write("![Quittung](" + imagename + "){ width=60% }\n")
+        f.close()
+    return True 
     
 #==================================================
 
-#Converts tmp.md to a pdf named filename and removes the tmp.md
+#Converts tmpname to pdf named pdfout_name, removes file tmpname 
 
-def convertToPdf(filename):
+def convertToPdf(pdfout_name, tmpname):
     #Create pandoc command and execute it
-    pandoc_cmd = "pandoc -s -f markdown+link_attributes -o " + filename
-    pandoc_cmd = pandoc_cmd + " tmp.md"
+    pandoc_cmd = "pandoc -s -f markdown+link_attributes -o " + pdfout_name
+    pandoc_cmd = pandoc_cmd + " " + tmpname
     os.system(pandoc_cmd)
-    os.remove("tmp.md")
+    os.remove(tmpname)
 
 #===================================================
 #Main
-if os.path.isfile(args.input):
-    writeMarkdown(args.input)
-    convertToPdf("tmp.md")
-    print("finished")
-    exit(0)
+def main():
+    for i in args.input:
+        print("Converting " + i)
+        if writeMarkdown(i, "tmp.md"):
+            convertToPdf(i.split('.')[0] + ".pdf", "tmp.md")
+            print("Success")
+        else:
+            print("Failed")
 
-#Adjust name of file so output is not overwritten
-if os.path.isdir(args.input):
-    os.chdir(args.input)
-    print("Path: " + os.getcwd())
-    files = os.listdir(".")
-    nr = 0
-    #multiple files does not work with title yet     
-    for f in files:
-        if f.endswith(".jpg"):
-            writeMarkdown(f)
-            if args.output is not None:
-                convertToPdf(args.output + str(nr) + ".pdf") 
-            else:
-                convertToPdf(f.split('.')[0] + ".pdf")
-            nr = nr + 1
-            print("converted " + f)
-    print("Converted " + str(nr) + " files")
-
-
+if __name__ == "__main__":
+    main()
