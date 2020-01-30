@@ -21,6 +21,9 @@ def filterLog(log, f):
 
 def isQuery(line):
     return ("query" in line)
+def isArecord(line):
+    return ("[A]" in line)
+
 
 #open filter functions: only [A] records
 #idea: create csv file / table /w person date, query, device
@@ -35,6 +38,7 @@ def main():
         log = content.split('\n')
 
     log = filterLog(log, isQuery)
+    log = filterLog(log, isArecord)
 
 
     with open("out.log", 'w') as f:
