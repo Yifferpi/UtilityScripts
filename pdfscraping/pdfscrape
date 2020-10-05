@@ -122,7 +122,7 @@ def main():
         passwd = getpass()
         cred = (user, passwd)
 
-    if args.keyword not None:
+    if args.keyword is not None:
         filter_links_for_keyword(links, args.keyword)
    
     if args.available:
