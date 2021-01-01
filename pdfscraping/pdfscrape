@@ -13,15 +13,15 @@ from dateutil.parser import parse
 #Todo: accept file as input, containing urls, triggered by flag
 #Todo: instead of url, read from stdin
 #Todo: handle case when different pdfs have the same name, only differ in url
+#Todo: auth via OAuth?
+#Todo: instead of keyword, accept regex
+HEADER = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.76 Safari/537.36', 
+          "Upgrade-Insecure-Requests": "1",
+          "DNT": "1",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "Accept-Language": "en-US,en;q=0.5",
+          "Accept-Encoding": "gzip, deflate"}
 cred = None
-
-#=======Arguments================================
-parser = argparse.ArgumentParser("Scrape all pdfs from a given URL")
-parser.add_argument('url', help="URL of the website to scrape")
-parser.add_argument('-i', '--interactive', action='store_true', help="Use Credentials interactive")
-parser.add_argument('-k', '--keyword', help="Only fetch pdfs with this keyword in its name")
-parser.add_argument('-a', '--available', action='store_true', help="Only list all targets")
-args = parser.parse_args()
 
 #=======Acquire and filter===================================
 
@@ -29,8 +29,7 @@ def get_pdflinks(url):
     '''Gathers all pdflinks from url'''
     response = None
     try:
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.76 Safari/537.36', "Upgrade-Insecure-Requests": "1","DNT": "1","Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8","Accept-Language": "en-US,en;q=0.5","Accept-Encoding": "gzip, deflate"}
-        response = requests.get(url, header=header)
+        response = requests.get(url, headers=HEADER)
         response.raise_for_status()
     except requests.exceptions.HTTPError as err:
         print(err)
@@ -39,21 +38,21 @@ def get_pdflinks(url):
 
     links = []
     for e in soup.find_all('a'):
-        if e.get('href').endswith(".pdf"):
-            links.append(urljoin(url, e.get('href')))
+        try:
+            if e.get('href').endswith(".pdf"):
+                links.append(urljoin(url, e.get('href')))
+        except AttributeError:
+            continue
     return links
 
 # Set of filter functions
 def filter_links_for_keyword(links, keyword):
-    '''filter function'''
-    links = [x for x in links if keyword in x.split('/')[-1]]
+    return [x for x in links if keyword in x.split('/')[-1]]
 def filter_links_for_updatable(links):
-    '''filter function'''
-    links = [x for x in links if nonexistent_or_updatable(x)]
+    return [x for x in links if nonexistent_or_updatable(x)]
 
 # decides for an url, if the pdf at that url should be downloaded or not
 def nonexistent_or_updatable(linktofile):
-    '''bla'''
     filename = linktofile.split('/')[-1]
     if os.path.isfile(filename):
 
@@ -62,10 +61,7 @@ def nonexistent_or_updatable(linktofile):
         filetime = zone.localize(filetime)
         r = None
         try:
-            if cred is None:
-                r = requests.head(linktofile)
-            else:
-                r = requests.head(linktofile, auth=cred)
+            r = requests.head(linktofile, auth=cred)
             r.raise_for_status()
         except requests.exceptions.HTTPError as err:
             print(err)
@@ -92,7 +88,9 @@ def download_links(links, cred=None):
         filename = l.split('/')[-1]
         content = None
         try:
-            content = download_file(l, cred)
+            r = requests.get(l, auth=cred)
+            r.raise_for_status()
+            content = r.content
         except requests.exceptions.HTTPError as err:
             print(err)
             print(filename + " could not be downloaded")
@@ -107,18 +105,14 @@ def download_links(links, cred=None):
     print("Successful downloads: " + str(numSucc) + " out of " + str(len(links)))
     return numSucc
 
-#this should be simplified to not use an if statement.
-def download_file(link, cred=None):
-    r = None
-    if cred is None:
-        r = requests.get(link)
-    else:
-        r = requests.get(link, auth=cred)
-    r.raise_for_status()
-    return r.content
-
 #=======Main====================================================
 def main():
+    parser = argparse.ArgumentParser("Scrape all pdfs from a given URL")
+    parser.add_argument('url', help="URL of the website to scrape")
+    parser.add_argument('-i', '--interactive', action='store_true', help="Use Credentials interactive")
+    parser.add_argument('-k', '--keyword', help="Only fetch pdfs with this keyword in its name")
+    parser.add_argument('-a', '--available', action='store_true', help="Only list all targets")
+    args = parser.parse_args()
 
     links = get_pdflinks(args.url)
 
@@ -128,13 +122,13 @@ def main():
         cred = (user, passwd)
 
     if args.keyword is not None:
-        filter_links_for_keyword(links, args.keyword)
+        links = filter_links_for_keyword(links, args.keyword)
    
     if args.available:
         print_links(links)
     else:
         #before downloading, make sure duplicate names on the site are handled
-        filter_links_for_updatable(links)
+        links = filter_links_for_updatable(links)
         download_links(links)
     
    
