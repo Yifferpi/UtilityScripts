@@ -1,33 +1,36 @@
 #! /usr/bin/env python3
 
 import argparse
-import requests
-import bs4
 import os
 import datetime
-import pytz
-from dateutil.parser import parse
 from urllib.parse import urljoin
 from getpass import getpass
+import requests
+import bs4
+import pytz
+from dateutil.parser import parse
 
 #Todo: accept file as input, containing urls, triggered by flag
 #Todo: instead of url, read from stdin
 #Todo: handle case when different pdfs have the same name, only differ in url
+cred = None
 
 #=======Arguments================================
 parser = argparse.ArgumentParser("Scrape all pdfs from a given URL")
 parser.add_argument('url', help="URL of the website to scrape")
 parser.add_argument('-i', '--interactive', action='store_true', help="Use Credentials interactive")
 parser.add_argument('-k', '--keyword', help="Only fetch pdfs with this keyword in its name")
-parser.add_argument('-a', '--available', action='store_true', help="Only list all pdfs that would be downloaded")
+parser.add_argument('-a', '--available', action='store_true', help="Only list all targets")
 args = parser.parse_args()
 
 #=======Acquire and filter===================================
 
 def get_pdflinks(url):
+    '''Gathers all pdflinks from url'''
     response = None
     try:
-        response = requests.get(url)
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.76 Safari/537.36', "Upgrade-Insecure-Requests": "1","DNT": "1","Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8","Accept-Language": "en-US,en;q=0.5","Accept-Encoding": "gzip, deflate"}
+        response = requests.get(url, header=header)
         response.raise_for_status()
     except requests.exceptions.HTTPError as err:
         print(err)
@@ -42,12 +45,15 @@ def get_pdflinks(url):
 
 # Set of filter functions
 def filter_links_for_keyword(links, keyword):
+    '''filter function'''
     links = [x for x in links if keyword in x.split('/')[-1]]
 def filter_links_for_updatable(links):
+    '''filter function'''
     links = [x for x in links if nonexistent_or_updatable(x)]
 
 # decides for an url, if the pdf at that url should be downloaded or not
 def nonexistent_or_updatable(linktofile):
+    '''bla'''
     filename = linktofile.split('/')[-1]
     if os.path.isfile(filename):
 
@@ -114,7 +120,6 @@ def download_file(link, cred=None):
 #=======Main====================================================
 def main():
 
-    cred = None
     links = get_pdflinks(args.url)
 
     if args.interactive:
