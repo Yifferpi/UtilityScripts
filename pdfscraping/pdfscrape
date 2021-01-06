@@ -25,7 +25,7 @@ cred = None
 
 #=======Acquire and filter===================================
 
-def get_pdflinks(url):
+def get_pdflinks(url, filetype):
     '''Gathers all pdflinks from url'''
     response = None
     try:
@@ -35,11 +35,14 @@ def get_pdflinks(url):
         print(err)
         exit(1)
     soup = bs4.BeautifulSoup(response.content, 'html.parser')
-
+    
+    #default case is pdf
+    if filetype is None:
+        filetype = ".pdf"
     links = []
     for e in soup.find_all('a'):
         try:
-            if e.get('href').endswith(".pdf"):
+            if e.get('href').endswith(filetype):
                 links.append(urljoin(url, e.get('href')))
         except AttributeError:
             continue
@@ -112,9 +115,10 @@ def main():
     parser.add_argument('-i', '--interactive', action='store_true', help="Use Credentials interactive")
     parser.add_argument('-k', '--keyword', help="Only fetch pdfs with this keyword in its name")
     parser.add_argument('-a', '--available', action='store_true', help="Only list all targets")
+    parser.add_argument('-t', '--type', help="use different file ending (default: .pdf)")
     args = parser.parse_args()
 
-    links = get_pdflinks(args.url)
+    links = get_pdflinks(args.url, args.type)
 
     if args.interactive:
         user = input("Username: ")
