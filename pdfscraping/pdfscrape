@@ -39,6 +39,8 @@ def get_pdflinks(url, filetype):
     #default case is pdf
     if filetype is None:
         filetype = ".pdf"
+    else:
+        filetype = "." + filetype
     links = []
     for e in soup.find_all('a'):
         try:
