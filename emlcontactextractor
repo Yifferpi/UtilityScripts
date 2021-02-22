@@ -1,0 +1,72 @@
+#! /usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import email.parser as parser
+from email import policy
+import sys
+import os
+import re
+import argparse
+import csv
+
+# This script takes a folder of .eml files, extracts the "From" header info
+# and writes pairs of names and corresponding email addresses into a csv file
+# declared by the output argument.
+
+# TODO:
+# making script callable from anywhere
+# fuzzing names?
+def getArgs():
+    parser = argparse.ArgumentParser( \
+            description='build a csv with names and corresponding \
+            email addresses from a folder of .eml files')
+    parser.add_argument('source', metavar='dir', help='source directory \
+            containing the .eml files')
+    parser.add_argument('output', metavar='output', help='name of the \
+            output csv file (if it exists, lines will be appended)')
+    return parser.parse_args()
+    
+def parseEmail(filename):
+    f = open(filename, 'rb')
+    email = parser.BytesParser(policy=policy.default).parse(f)
+    f.close()
+    line = email.get("From")
+    name, mail = ("", "")
+    res = re.search("^.*<", line)
+    if res is not None:
+        tmp = res.group(0)[0:-1]
+        res = re.search("\".*\"", tmp)
+        if res is not None:
+            name = res.group(0)[1:-1].strip()
+        else:
+            name = tmp.strip()
+    res = re.search("<.*>", line)
+    if res is not None:
+        mail = res.group(0)[1:-1].strip()
+    return (name, mail)
+
+def printList(l):
+    for e in l:
+        print("{:30.30}{}".format(*e))
+
+def writeCsv(filename, tuplelist):
+    with open(filename, 'a') as f:
+        writer = csv.writer(f)
+        for t in tuplelist:
+            writer.writerow(t)
+
+def main():
+    args = getArgs()
+    l = list()    
+    for f in os.listdir(args.source):
+        if f.endswith(".eml"):
+            t = parseEmail(args.source + f)
+            if t != ("", ""):
+                l.append(t)
+    l = list(set(l))
+    #printList(l)
+    writeCsv(args.output, l)
+
+
+if __name__ == "__main__":
+    main()
