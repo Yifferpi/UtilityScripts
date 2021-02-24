@@ -124,6 +124,7 @@ def main():
 
     if args.interactive:
         user = input("Username: ")
+        print(user)
         passwd = getpass()
         cred = (user, passwd)
 
@@ -135,7 +136,7 @@ def main():
     else:
         #before downloading, make sure duplicate names on the site are handled
         links = filter_links_for_updatable(links)
-        download_links(links)
+        download_links(links, cred)
     
    
 if __name__ == "__main__":
