@@ -21,7 +21,6 @@ HEADER = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 
           "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
           "Accept-Language": "en-US,en;q=0.5",
           "Accept-Encoding": "gzip, deflate"}
-cred = None
 
 #=======Acquire and filter===================================
 
@@ -122,6 +121,7 @@ def main():
 
     links = get_pdflinks(args.url, args.type)
 
+    cred = None
     if args.interactive:
         user = input("Username: ")
         print(user)
