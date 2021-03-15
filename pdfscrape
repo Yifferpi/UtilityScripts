@@ -52,11 +52,11 @@ def get_pdflinks(url, filetype):
 # Set of filter functions
 def filter_links_for_keyword(links, keyword):
     return [x for x in links if keyword in x.split('/')[-1]]
-def filter_links_for_updatable(links):
-    return [x for x in links if nonexistent_or_updatable(x)]
+def filter_links_for_updatable(links, cred):
+    return [x for x in links if nonexistent_or_updatable(x, cred)]
 
 # decides for an url, if the pdf at that url should be downloaded or not
-def nonexistent_or_updatable(linktofile):
+def nonexistent_or_updatable(linktofile, cred):
     filename = linktofile.split('/')[-1]
     if os.path.isfile(filename):
 
@@ -114,6 +114,8 @@ def main():
     parser = argparse.ArgumentParser("Scrape all pdfs from a given URL")
     parser.add_argument('url', help="URL of the website to scrape")
     parser.add_argument('-i', '--interactive', action='store_true', help="Use Credentials interactive")
+    parser.add_argument('--user', help="username for basic auth")
+    parser.add_argument('--password', help="password for basic auth")
     parser.add_argument('-k', '--keyword', help="Only fetch pdfs with this keyword in its name")
     parser.add_argument('-a', '--available', action='store_true', help="Only list all targets")
     parser.add_argument('-t', '--type', help="use different file ending (default: .pdf)")
@@ -124,9 +126,10 @@ def main():
     cred = None
     if args.interactive:
         user = input("Username: ")
-        print(user)
         passwd = getpass()
         cred = (user, passwd)
+    elif args.user is not None and args.password is not None:
+        cred = (args.user, args.password)
 
     if args.keyword is not None:
         links = filter_links_for_keyword(links, args.keyword)
@@ -135,7 +138,7 @@ def main():
         print_links(links)
     else:
         #before downloading, make sure duplicate names on the site are handled
-        links = filter_links_for_updatable(links)
+        links = filter_links_for_updatable(links, cred)
         download_links(links, cred)
     
    
