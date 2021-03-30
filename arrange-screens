@@ -1,0 +1,50 @@
+#!/bin/sh
+
+# Cancel if no argument is provided
+if [ $# -eq 0 ]; then
+    cat << EOF
+Usage: ${0##*/} [dual|monitor|laptop|mirror]
+Arrange your screens.
+
+  dual       Use the built-in monitor as well as the attached monitor
+  monitor    Use only the attached monitor, disable built-in monitor
+  laptop     Use only the built-in monitor, deattach from other screes
+  mirror     Mirror the content of the laptop to the attached monitor
+
+EOF
+    exit 1
+fi
+
+# Define primary screen
+primary="eDP-1"
+
+# Recognize screens
+xrandr --auto
+screen=`xrandr --current | grep " connected" | grep -v "$primary" | head -n1 | cut -d " " -f1`
+
+# Dual mode
+if [ "$1" = "dual" ]; then
+  xrandr --output "$primary" --auto --output "$screen" --auto --panning 3840x2160+3200+0 --scale 2x2 --right-of "$primary"
+fi
+
+# Monitor mode
+if [ "$1" = "monitor" ]; then
+  xrandr --dpi 96 --output "$screen" --auto --panning 0x0 --output "$primary" --off
+fi
+
+# Laptop mode
+if [ "$1" = "laptop" ]; then
+  xrandr --dpi 96 --output "$primary" --auto --output "$screen" --off
+fi
+
+# Mirror mode
+if [ "$1" = "mirror" ]; then
+  xrandr --dpi 96 --output "$primary" --auto --output "$screen" --auto --panning 0x0 --scale-from 3200x1800 --same-as "$primary"
+  #xrandr --dpi 96 --output "$primary" --auto --output "$screen" --same-as "$primary" --auto
+fi
+
+# Update background image
+#~/.fehbg
+
+# Restart i3
+i3-msg restart
