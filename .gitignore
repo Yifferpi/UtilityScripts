@@ -1,2 +1,4 @@
 *.pdf
 *.sqlite
+*.secret
+*.img
