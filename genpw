@@ -1,0 +1,23 @@
+#! /usr/bin/env python3
+
+import os
+from base64 import b64encode
+import argparse
+
+''' Todo:
+    - add options for different charsets
+    - understand encodings
+    - option to generate to clipboard (additionally)
+    - option to generate may pws in one go
+'''
+
+parser=argparse.ArgumentParser("Generate password based on /dev/urandom")
+parser.add_argument('-l', '--length',  default=16, type=int, \
+        help="password length, default: 16")
+args = parser.parse_args()
+
+
+key = os.urandom(args.length)
+text = b64encode(key).decode('utf-8')
+
+print(text)
