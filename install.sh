@@ -16,6 +16,7 @@ ln -s $path/pdfscrape pdfscrape
 ln -s $path/jpg2pdf jpg2pdf
 ln -s $path/arrange-screens arrange-screens
 ln -s $path/mkmermaid mkmermaid
+ln -s $path/genpw genpw
 
 
 

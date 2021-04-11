@@ -9,6 +9,7 @@ import argparse
     - understand encodings
     - option to generate to clipboard (additionally)
     - option to generate may pws in one go
+    - fix two equality signs at the end
 '''
 
 parser=argparse.ArgumentParser("Generate password based on /dev/urandom")
