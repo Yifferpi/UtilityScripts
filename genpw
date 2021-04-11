@@ -2,7 +2,8 @@
 
 import os
 from base64 import b64encode
-import argparse
+import argparse, math
+import binascii
 
 ''' Todo:
     - add options for different charsets
@@ -18,7 +19,16 @@ parser.add_argument('-l', '--length',  default=16, type=int, \
 args = parser.parse_args()
 
 
-key = os.urandom(args.length)
-text = b64encode(key).decode('utf-8')
+numbytes = 3*math.floor(args.length/4)
 
+key = os.urandom(numbytes)
+text = b64encode(key).decode('utf-8')
 print(text)
+#print(len(text))
+
+#key = os.urandom(numbytes)
+#text = binascii.b2a_qp(key, istext=True).decode('UTF-8')
+#text = b64encode(key).decode('ascii')
+#print(text)
+#print(len(text))
+
