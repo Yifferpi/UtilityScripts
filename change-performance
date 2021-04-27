@@ -1,0 +1,40 @@
+#!/bin/sh
+
+# Cancel if no argument is provided
+if [ $# -eq 0 ]; then
+    cat << EOF
+Usage: ${0##*/} [performance|ondemand]
+Change frequency governor of all cpus
+
+  performance   Use the built-in monitor as well as the attached monitor
+  powersave
+  ondemand      Use only the attached monitor, disable built-in monitor
+
+EOF
+    exit 1
+fi
+
+if [ $(whoami) != "root" ]; then
+    echo "Are you root?"
+    exit 1
+fi
+
+case $1 in
+    performance)
+        for d in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do 
+            echo performance > $d; 
+        done ;;
+    powersave)
+        for d in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do 
+            echo powersave > $d; 
+        done ;;
+    ondemand)
+        for d in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do 
+            echo ondemand > $d; 
+        done ;;
+    *)
+        echo "only performance or ondemand allowed"
+        exit 1 ;;
+esac
+
+
