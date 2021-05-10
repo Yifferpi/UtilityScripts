@@ -10,7 +10,8 @@ if [ $# -eq 0 ]; then
     exit 1
 fi
 
-
+#todo: check that device is less than 100G using lsblk and grep
+#warn and ask for user consent
 #Flash image given by first arg
 dd bs=4M if="$PWD/$1" of="/dev/sde" conv=fsync
 echo "Flash finished"
