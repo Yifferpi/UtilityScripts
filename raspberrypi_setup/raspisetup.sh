@@ -18,22 +18,24 @@ exit 1
 fi
 
 #Flash image given by first arg
-s=`lsblk -b | grep "$2" | tr -s ' ' | cut -d ' ' -f4` #try to find device size
+s=`lsblk -b | grep "$2 " | tr -s ' ' | cut -d ' ' -f4` #try to find device size
 if [ "$s" == "" ]; then
     echo "$2 not found. Possible devices are: $blkdev"
     echo "Exiting.."
     exit 1
-elif [ "$s" -gt "35000000000" ]; then #check device less than 35G
+elif [ "$s" -gt 35000000000 ]; then #check device less than 35G
     #if bigger, ask for additinal confirmation
     while true; do
     read -p "$2 is bigger than a typical drive. Are you sure you want \
 to overwrite it? [y/n]" yn
     case $yn in
         [Yy]* ) echo "Start flashing..."; break;;
-        [Nn]* ) echo "Aborting..."; exit;;
+        [Nn]* ) echo "Aborting...";echo "$s"; exit;;
         * ) echo "Please answer yes or no.";;
     esac
     done
+else
+    echo "All good"
 fi
 # Check for root privileges
 if [ $(whoami) != "root" ]; then
@@ -46,14 +48,14 @@ echo "Flash finished"
 
 # mount boot partition
 mkdir /mnt/raspi_boot
+sleep 0.5
 mount "/dev/$21" /mnt/raspi_boot
 sleep 0.5
 touch /mnt/raspi_boot/ssh
-touch /mnt/raspi_boot/wpa_supplicant.conf
 #wifi config
 #check existence of .secret file to copy
-cat wificonfig.secret > /mnt/raspi_boot/wpa_supplicant.conf
-
+sudo cp wificonfig.secret /mnt/raspi_boot/wpa_supplicant.conf
+sleep 0.5
 umount /mnt/raspi_boot
 sleep 0.5
 rmdir /mnt/raspi_boot
