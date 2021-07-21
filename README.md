@@ -17,9 +17,21 @@ Used mainly to scrape pdf files. Supports
 - other media formats
 
 ### jpg2pdf
-Takes a jpg and puts enbeds it into a pdf. Some other things like \
-date or title can be added to the pdf via flags.
+Takes a jpg and puts enbeds it into a pdf. Some other things like
+date or title can be added to the pdf via flags. 
+Dependencies: pandoc and its depencencies
 
 ### arrange-screens
-This is a script to change screen settings on the laptop, abstracting \
+This is a script to change screen settings on the laptop, abstracting
 complicated xrandr commands to arrange multiple screens.
+
+### emlcontactextractor
+Given a folder of `.eml` files, parse metadata and dump contact details
+into `.csv` file for archiving/safekeeping.
+
+### mkmermaid
+Small python script to generate a
+[Mermaid Chart](https://mermaid-js.github.io/mermaid/#/README).
+
+### change-performance
+Manipulate a linux systems cpu frequency governor.
