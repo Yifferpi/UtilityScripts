@@ -25,6 +25,7 @@ screen=`xrandr --current | grep " connected" | grep -v "$primary" | head -n1 | c
 # Dual mode
 if [ "$1" = "dual" ]; then
   xrandr --output "$primary" --auto --output "$screen" --auto --panning 3840x2160+3200+0 --scale 2x2 --right-of "$primary"
+#  xrandr --output "$primary" --auto --output "$screen" --auto --panning 3840x2160+3200+0 --scale 2x2 --left-of "$primary"
 fi
 
 # Monitor mode
