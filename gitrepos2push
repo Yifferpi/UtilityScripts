@@ -1,0 +1,61 @@
+#!/bin/bash
+
+# TODO: 
+# use send-notify for statistics
+# offer to commit all with standard commit message
+
+# Set root directory for the search
+root_dir="/home/$USER"
+
+# Statistics
+count_unpushed=0
+count_uncommitted=0
+count_detachedHead=0
+count_noRemote=0
+
+# Find all git repositories under the current directory
+for dir in $(find $root_dir -type d -name ".git" -print); do
+    # Go to the root directory of the repository
+    cd "${dir%/*}"
+
+    # Check if the current branch is detached
+    if [[ $(git rev-parse --abbrev-ref HEAD) == "HEAD" ]]; then
+        # The current branch is detached
+        # Print the repository's root directory
+        echo "Detached: ${dir%/*}"
+        ((count_detachedHead++))
+    else
+        # Check if there are local changes that have not been committed
+        if [[ $(git status --porcelain) ]]; then
+            # Print the repository's root directory
+            echo "Uncommitted: ${dir%/*}"
+            ((count_uncommitted++))
+        else
+            # Check if the current branch is configured to track a remote branch
+            upstream=$(git branch -vv | grep '^\*' | awk '{print $4}')
+            if [[ -z "$upstream" ]]; then
+                # The current branch is not configured to track a remote branch
+                # Print the repository's root directory
+                echo "No Remote: ${dir%/*}"
+                ((count_noRemote++))
+            else
+                # Check if the repository has any commits that have not been pushed
+                if [[ $(git cherry) ]]; then
+                    # Print the repository's root directory
+                    echo "Unpushed: ${dir%/*}"
+                    ((count_unpushed++))
+                fi
+            fi
+        fi
+    fi
+
+    # Go back to the original directory
+    cd - > /dev/null
+done
+
+# Print the summary
+echo -e "\n\033[1;4mSummary\033[0m:"
+summary="Uncommitted:$count_uncommitted\nUnpushed:$count_unpushed\nNoRemote:$count_noRemote\nDetachedHead:$count_detachedHead"
+#echo "$count repositories with unpushed changes"
+echo -e "$summary" | column -t -s ":"
+
