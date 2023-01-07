@@ -37,5 +37,8 @@ link "gitrepos2push"
 link "jpg2pdf"
 link "arrange-screens"
 link "mkmermaid"
+#link "lint_files"
+link "check_markdown_links"
+link "generate_pw"
 
 
