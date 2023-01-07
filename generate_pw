@@ -1,0 +1,98 @@
+#!/bin/bash
+
+# TODO: format output properly if there are multiple passwords
+# TODO: add charset with *some* special chars, something in between alnum and nospace
+
+# Defaults
+default_len="10"
+default_num="1"
+filter="[:alnum:]" # charset 'alnum' is default
+
+print_help() {
+    cat << EOF
+Usage: ${0##*/} [-h|-c] [len] [n]
+  Generate n passwords of length len from /dev/urandom.
+
+  Positional:
+    len       password length (default: $default_len)
+    n         number of passwords (default: $default_num)
+
+  Optional: 
+    -h, --help      Show this help message.
+    -c, --charset   select allowed charset.
+
+EOF
+}
+print_charset() {
+  cat << EOF
+Available charsets:
+
+  lower     only allow lower case
+  upper     only allow upper case
+  letters   allow all letters
+  numbers   only numeric characters
+  alnum     allow all letters and numbers
+  nospace   allow all printable characters
+            except whitespace
+  all       allow all printable chars
+
+EOF
+}
+
+# Set the short and long options
+# one colon --> required argument, two colons --> optional argument
+short_options="hc:"
+long_options=("help,charset:")
+
+# Use getopt to parse the options
+parsed_options=$(getopt -o "$short_options" -l "${long_options[@]}" -- "$@")
+
+# Check the return value of getopt
+if [ $? -ne 0 ]; then
+  echo "Error: Unable to parse options" >&2
+  print_help
+  exit 1
+fi
+
+# Set the parsed options in the positional parameters
+eval set -- "$parsed_options"
+
+# Iterate over the parsed options
+while true; do
+  case "$1" in
+    -h|--help)  print_help
+                print_charset
+                exit;;
+    -c|--charset)
+      case "$2" in
+        lower)      filter="[:lower:]";;
+        upper)      filter="[:upper:]";;
+        letters)    filter="[:alpha:]";;
+        numbers)    filter="[:digit:]";;
+        alnum)      filter="[:alnum:]";;
+        nospace)    filter="[:graph:]";;
+        all)        filter="[:print:]";;
+        *)      echo "Unknown charset option!";
+                print_charset
+                exit 1;;
+      esac
+      shift 2;;
+    --)
+      shift
+      break;;
+  esac
+done
+
+# Process positional arguments
+if [ "$1" != "" ]; then
+  default_len=$1      # set length of passwords
+fi
+if [ "$2" != "" ]; then
+  default_num=$1      # set number of generated passwords
+fi
+
+# Generate the password
+for i in $(seq 1 "$default_num"); do
+    password=$(< /dev/random tr -dc "$filter" | head -c "$default_len")
+    echo "$password"
+done
