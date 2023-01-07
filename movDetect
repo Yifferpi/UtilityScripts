@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# Set the threshold for detecting sudden movement
+#THRESHOLD=0.5
+THRESHOLD=10
+
+# Read the scale factor for the accelerometer
+acc_scale=$(cat /sys/bus/iio/devices/iio:device0/in_accel_scale)
+
+# Continuously read the accelerometer data
+while true; do
+  # Read the current accelerometer data
+  acc_x=$(cat /sys/bus/iio/devices/iio:device0/in_accel_x_raw)
+  acc_y=$(cat /sys/bus/iio/devices/iio:device0/in_accel_y_raw)
+  acc_z=$(cat /sys/bus/iio/devices/iio:device0/in_accel_z_raw)
+  
+  # Convert the raw accelerometer data to units of g
+  acc_x=$(echo "$acc_x * $acc_scale" | bc -l)
+  acc_y=$(echo "$acc_y * $acc_scale" | bc -l)
+  acc_z=$(echo "$acc_z * $acc_scale" | bc -l)
+  
+  # Calculate the magnitude of the acceleration vector
+  acc_mag=$(echo "sqrt($acc_x^2 + $acc_y^2 + $acc_z^2)" | bc -l)
+  
+  # Check if the magnitude exceeds the threshold
+  if [[ $(echo "$acc_mag > $THRESHOLD" | bc -l) -eq 1 ]]; then
+    # Sudden movement detected!
+    echo "Sudden movement detected! Acceleration magnitude: $acc_mag g"
+  fi
+  
+  # Sleep for a short time before reading the accelerometer data again
+  sleep 0.1
+done

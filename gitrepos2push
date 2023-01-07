@@ -4,6 +4,49 @@
 # use send-notify for statistics
 # offer to commit all with standard commit message
 
+#while true
+#do
+#    read -p "Really run script?" answer
+#    case $answer in
+#        [yY]* ) echo "Okay, running:"
+#                break;;
+#        [nN]* ) exit;;
+#        * )     echo "Dude, just enter Y or N please.";;
+#    esac
+#done
+#echo "Hello world"
+
+
+# Set a flag to indicate whether the help flag was found
+
+# Use getopts to parse the options
+if [ $# -ge 1 ]; then
+    usage=$(cat << EOF
+Usage: ${0##*/} [root_dir]
+    Find git repositories with pending changes.
+
+    root_dir  directory root for search (default: /home/$USER)
+
+Error: propositional argument missing!
+EOF
+)
+    while getopts ":h" opt; do
+      case $opt in
+        h) echo "$usage";
+           exit 1;;
+        \?)
+          # Print an error message
+          echo "Invalid option: -$OPTARG" >&2
+          exit 1
+          ;;
+      esac
+    done
+fi
+
+# TODO: actually make use of the param
+# TODO: read config file of repo names to be skipped
+
+
 # Set root directory for the search
 root_dir="/home/$USER"
 

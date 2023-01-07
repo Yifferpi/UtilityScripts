@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# Check if a directory path was provided
+if [ -z "$1" ]; then
+  echo "Error: Please provide a directory path."
+  exit 1
+fi
+
+# Check if the provided path is a directory
+if [ ! -d "$1" ]; then
+  echo "Error: $1 is not a directory."
+  exit 1
+fi
+
+# Set the directory separator
+dir_sep="/"
+
+# Define the linting function
+lint_name () {
+  # Check if the file or directory name matches the pattern
+  if grep -q -E '[^a-zA-Z0-9._-]' <<< "$1"; then
+    # Print the invalid file or directory name
+    echo "Invalid file or directory name: $1"
+  fi
+}
+
+# Find all files and directories in the provided path
+find "$1" -mindepth 1 -print0 | while read -d $'\0' file
+do
+  # Lint the file or directory name
+  lint_name "$file"
+done

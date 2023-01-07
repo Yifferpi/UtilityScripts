@@ -1,0 +1,41 @@
+#!/bin/bash
+
+# This script checks all the links in a markdown file for a HTTP return code of 200.
+
+# TODO
+# - add help menu
+# - support for scanning directory recursively
+# - support for simply finding/counting links
+# - support for globbing
+# - find curl flags such that return codes from dependencies are ignored
+
+# Extract all the links from the markdown file
+links=$(grep -o 'http[^)]*' "$1")
+
+count_valid=0
+count_total=0
+
+# Check each link
+for link in $links
+do
+  # Use curl to check the HTTP return code for the link
+  status_code=$(curl -s -o /dev/null -w "%{http_code}" $link)
+
+  # Check if the return code is 200
+  if [ $status_code -eq 200 ]
+  then
+    ((count_valid++))
+  else
+    linenr=$(cat $1 | grep -nF "$link" | cut -d ':' -f 1)
+    #echo "INVALID CODE $status_code: $link"
+    echo "INVALID: link on line $linenr returned $status_code"
+  fi
+  ((count_total++))
+done
+
+echo "Summary:"
+echo "$count_valid out of $count_total are valid in $1"
+
+#Note that this script assumes that the links in the markdown file are on separate lines. If the links are embedded in other text, you may need to use a more complex regular expression to extract them.
+# the following should find embedded links as well
+# links=$(grep -o 'http[^)]*' markdown_file.md | tr -d '[]')

@@ -15,15 +15,61 @@ EOF
     exit 1
 fi
 
+## Check if the xrandr program is installed
+#if ! which xrandr > /dev/null; then
+#    echo "Error: xrandr program not found."
+#    exit 1
+#fi
+#
+## Get the list of connected monitors
+#monitors=$(xrandr | grep " connected" | awk '{print $1}')
+#
+## Get the number of monitors
+#num_monitors=$(echo "$monitors" | wc -l)
+#
+## Check if there are multiple monitors
+#if [ $num_monitors -lt 2 ]; then
+#    echo "Error: only one monitor detected."
+#    exit 1
+#fi
+#
+## Parse the command-line options
+#while [ $# -gt 0 ]; do
+#    case "$1" in
+#        "--mirror")
+#            # Set the monitors to mirror mode
+#            xrandr --output "${monitors[1]}" --auto --same-as "${monitors[0]}"
+#            exit 0
+#            ;;
+#        "--extend")
+#            # Set the monitors to extend mode
+#            xrandr --output "${monitors[1]}" --auto --right-of "${monitors[0]}"
+#            exit 0
+#            ;;
+#        *)
+#            # Invalid option
+#            echo "Error: invalid option '$1'"
+#            exit 1
+#            ;;
+#    esac
+#    shift
+#done
+#
+## Display usage message if no options were specified
+#echo "Usage: $0 [--mirror|--extend]"
+
 # Define primary screen
 primary="eDP-1"
 
 # Recognize screens
 xrandr --auto
 screen=`xrandr --current | grep " connected" | grep -v "$primary" | head -n1 | cut -d " " -f1`
+echo "$primary"
+echo "$screen"
 
 # Dual mode
 if [ "$1" = "dual" ]; then
+  #xrandr --output "$primary" --auto --right-of "$screen"
   xrandr --output "$primary" --auto --output "$screen" --auto --panning 3840x2160+3200+0 --scale 2x2 --right-of "$primary"
 #  xrandr --output "$primary" --auto --output "$screen" --auto --panning 3840x2160+3200+0 --scale 2x2 --left-of "$primary"
 fi
@@ -40,8 +86,8 @@ fi
 
 # Mirror mode
 if [ "$1" = "mirror" ]; then
+  #xrandr --output "$primary" --auto --output "$screen" --auto --panning 3840x2160+3200+0 --scale 2x2 --same-as "$primary"
   xrandr --dpi 96 --output "$primary" --auto --output "$screen" --auto --panning 0x0 --scale-from 3200x1800 --same-as "$primary"
-  #xrandr --dpi 96 --output "$primary" --auto --output "$screen" --same-as "$primary" --auto
 fi
 
 # Update background image
