@@ -16,6 +16,10 @@ Used mainly to scrape pdf files. Supports
 - HTTPBasicAuth
 - other media formats
 
+### generate_pw
+Simple script that generates passwords from `/dev/random`.
+Supports different charsets.
+
 ### jpg2pdf
 Takes a jpg and puts enbeds it into a pdf. Some other things like
 date or title can be added to the pdf via flags. 
