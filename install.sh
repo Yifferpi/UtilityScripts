@@ -32,13 +32,17 @@ function link() {
 }
 
 cd "$installfolder"
-link "pdfscrape"
-link "gitrepos2push"
-link "jpg2pdf"
 link "arrange-screens"
-link "mkmermaid"
-#link "lint_files"
+#link "change-performance"
 link "check_markdown_links"
+#link "emlcontactextractor"
 link "generate_pw"
+link "gitrepos2push"
+#link "invalid_symlinks"
+link "jpg2pdf"
+#link "lint_files"
+link "mkmermaid"
+#link "movDetect"
+link "pdfscrape"
 
 

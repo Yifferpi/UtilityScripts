@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# UNTESTED
+
+# Check if the root directory is provided as a command-line argument
+if [ $# -eq 0 ]; then
+  echo "Error: No root directory provided"
+  exit 1
+fi
+
+root_dir=$1
+
+# Find all symbolic links in the root directory and its subdirectories
+find "$root_dir" -type l | while read symlink; do
+  # Check if the symbolic link is invalid
+  if ! test -L "$symlink" -o -e "$symlink"; then
+    # Print the path of the invalid symbolic link
+    echo "$symlink"
+  fi
+done
