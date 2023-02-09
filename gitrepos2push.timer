@@ -1,0 +1,14 @@
+[Unit]
+Description=Run gitrepos2push daily
+
+[Service]
+User=yifferpi
+ExecStart=./gitrepos2push
+
+[Timer]
+OnCalendar=Mon..Fri 11:00:00
+OnCalendar=Sat,Sun 20:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

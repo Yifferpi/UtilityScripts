@@ -1,0 +1,9 @@
+[Unit]
+Description=gitrepos2push
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/bash /home/yifferpi/gitrepos/UtilityScripts/gitrepos2push -c
+Environment="DISPLAY=:0" "XAUTHORITY=/home/yifferpi/.Xauthority"
+KillMode=process
+IgnoreSIGPIPE=no

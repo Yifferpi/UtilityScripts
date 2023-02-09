@@ -63,7 +63,7 @@ primary="eDP-1"
 
 # Recognize screens
 xrandr --auto
-screen=`xrandr --current | grep " connected" | grep -v "$primary" | head -n1 | cut -d " " -f1`
+screen=$(xrandr --current | grep " connected" | grep -v "$primary" | head -n1 | cut -d " " -f1)
 echo "$primary"
 echo "$screen"
 
@@ -92,6 +92,8 @@ fi
 
 # Update background image
 #~/.fehbg
+#nitrogen --restore
+#picom -b
 
 # Restart i3
 i3-msg restart

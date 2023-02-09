@@ -1,27 +1,11 @@
 #!/bin/bash
 
 # TODO: 
-# use send-notify for statistics
 # offer to commit all with standard commit message
+# config file to ignore certain repos
 
-#while true
-#do
-#    read -p "Really run script?" answer
-#    case $answer in
-#        [yY]* ) echo "Okay, running:"
-#                break;;
-#        [nN]* ) exit;;
-#        * )     echo "Dude, just enter Y or N please.";;
-#    esac
-#done
-#echo "Hello world"
-
-
-# Set a flag to indicate whether the help flag was found
-
-# Use getopts to parse the options
-if [ $# -ge 1 ]; then
-    usage=$(cat << EOF
+print_help() {
+    cat << EOF
 Usage: ${0##*/} [root_dir]
     Find git repositories with pending changes.
 
@@ -29,22 +13,25 @@ Usage: ${0##*/} [root_dir]
 
 Error: propositional argument missing!
 EOF
-)
-    while getopts ":h" opt; do
+}
+
+notify=0
+
+if [ $# -ge 1 ]; then
+    while getopts ":hc" opt; do
       case $opt in
-        h) echo "$usage";
+        h) print_help
            exit 1;;
+        c) notify=1;;
         \?)
           # Print an error message
           echo "Invalid option: -$OPTARG" >&2
+          print_help
           exit 1
           ;;
       esac
     done
 fi
-
-# TODO: actually make use of the param
-# TODO: read config file of repo names to be skipped
 
 
 # Set root directory for the search
@@ -100,5 +87,10 @@ done
 echo -e "\n\033[1;4mSummary\033[0m:"
 summary="Uncommitted:$count_uncommitted\nUnpushed:$count_unpushed\nNoRemote:$count_noRemote\nDetachedHead:$count_detachedHead"
 #echo "$count repositories with unpushed changes"
-echo -e "$summary" | column -t -s ":"
+summary=$(echo -e "$summary" | column -t -s ":")
+echo "$summary"
 
+if [ $notify -eq 1 ]; then
+    #notify-send -a "gitrepos2push" -u normal -t 30000 -i weather-storm-symbolic "Repos requiring action" "\n$summary\n\nTo list, run gitrepos2push"
+    notify-send -a "gitrepos2push" -u normal -w -i weather-storm-symbolic "Repos requiring action" "\n$summary\n\nTo list, run gitrepos2push"
+fi
