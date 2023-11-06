@@ -62,15 +62,19 @@ fi
 primary="eDP-1"
 
 # Recognize screens
-xrandr --auto
+#xrandr --auto
 screen=$(xrandr --current | grep " connected" | grep -v "$primary" | head -n1 | cut -d " " -f1)
 echo "$primary"
 echo "$screen"
 
 # Dual mode
 if [ "$1" = "dual" ]; then
+  xrandr --output "$screen" --mode 1920x1080
+  xrandr --output "$primary" --mode 3200x1800 --scale 1 --right-of "$screen"
   #xrandr --output "$primary" --auto --right-of "$screen"
-  xrandr --output "$primary" --auto --output "$screen" --auto --panning 3840x2160+3200+0 --scale 2x2 --right-of "$primary"
+  #xrandr --output "$screen" --auto --panning 3840x2160+3200+0 --scale 2x2 --right-of "$primary"
+  #xrandr --output "$screen" --auto --right-of "$primary"
+  #xrandr --output "$primary" --auto --output "$screen" --auto --panning 3840x2160+3200+0 --scale 2x2 --right-of "$primary"
 #  xrandr --output "$primary" --auto --output "$screen" --auto --panning 3840x2160+3200+0 --scale 2x2 --left-of "$primary"
 fi
 
@@ -81,13 +85,18 @@ fi
 
 # Laptop mode
 if [ "$1" = "laptop" ]; then
-  xrandr --dpi 96 --output "$primary" --auto --output "$screen" --off
+  xrandr --output "$screen" --off
+  ##xrandr --output "$primary" --dpi 96 --output "$screen" --off
+  #xrandr --dpi 96 --output "$primary" --auto --output "$screen" --off
+  #xrandr --output "$screen" --off
 fi
 
 # Mirror mode
 if [ "$1" = "mirror" ]; then
   #xrandr --output "$primary" --auto --output "$screen" --auto --panning 3840x2160+3200+0 --scale 2x2 --same-as "$primary"
-  xrandr --dpi 96 --output "$primary" --auto --output "$screen" --auto --panning 0x0 --scale-from 3200x1800 --same-as "$primary"
+  xrandr --output "$primary" --mode 3200x1800 
+  xrandr --output "$screen" --mode 1920x1080 --scale 1.6
+  #xrandr --dpi 96 --output "$primary" --auto --output "$screen" --auto --panning 0x0 --scale-from 3200x1800 --same-as "$primary"
 fi
 
 # Update background image

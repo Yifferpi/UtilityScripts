@@ -36,6 +36,7 @@ fi
 
 # Set root directory for the search
 root_dir="/home/$USER"
+skip_dir=".cache"
 
 # Statistics
 count_unpushed=0
@@ -44,7 +45,7 @@ count_detachedHead=0
 count_noRemote=0
 
 # Find all git repositories under the current directory
-for dir in $(find $root_dir -type d -name ".git" -print); do
+for dir in $(find $root_dir -name $skip_dir -prune -o -type d -name ".git" -print); do
     # Go to the root directory of the repository
     cd "${dir%/*}"
 
