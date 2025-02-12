@@ -88,7 +88,15 @@ elif [ "$multi_scan" = true ]; then
         fi
 
         # Scan page
-        scanimage --device "$device_name" --mode Color --resolution 300 --progress --format=tiff --source Flatbed -l $zero_x -t $zero_y -x $width -y $height > "$temp_dir/page$page_num.tiff"
+        #scanimage --device "$device_name" --mode Color --resolution 300 --progress --format=tiff --source Flatbed -l $zero_x -t $zero_y -x $width -y $height > "$temp_dir/page$page_num.tiff"
+        scanimage --device "$device_name" \
+            --mode Color \
+            --resolution 300 \
+            --progress \
+            --format=tiff \
+            --source Flatbed \
+            -l $zero_x -t $zero_y \
+            -x $width -y $height | img2pdf --pagesize A4 -o "$temp_dir/page$page_num.pdf"
         echo "Page $page_num scanned."
         #scanimage --device "$device_name" --mode Color --resolution 300 --progress --format=pnm --source Flatbed -l $zero_x -t $zero_y -x $width -y $height > "$temp_dir/page$page_num.pnm"
         #echo "Page $page_num scanned."
@@ -100,10 +108,11 @@ fi
 
 # Combine all scanned pages into a single PDF
 echo "Combining scanned pages into a single PDF..."
+pdfunite "$temp_dir/page"*.pdf "$output_pdf"
 #magick "$temp_dir/page*.tiff" -quality 50 -compress JPEG "$temp_dir/compressed_%03d.tiff"
 #magick "$temp_dir/page*.tiff" -density 150 -resize 70% -quality 50 -compress JPEG "$temp_dir/compressed_%03d.tiff"
 #magick "$temp_dir/compressed_*.tiff" -page A4 "$output_pdf"
-magick "$temp_dir/page*.tiff" -normalize -level 10%,90% -despeckle -sharpen 0x1.0 -compress JPEG -quality 85 -page A4 "$output_pdf"
+#magick "$temp_dir/page*.tiff" -normalize -level 10%,90% -despeckle -sharpen 0x1.0 -compress JPEG -quality 85 -page A4 "$output_pdf"
 
 # Run ocrmypdf to perform OCR on the PDF
 echo "Performing OCR on the PDF..."
