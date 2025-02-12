@@ -14,7 +14,6 @@ scanner_name="Canon LiDE 120"
 device_name=$(scanimage -L | grep "$scanner_name" | cut -d ' ' -f 2 | cut -c 2-23)
 timestamp=$(date +"%Y%m%d_%H%M%S")
 output_pdf="scan$timestamp.pdf"
-page_num=1
 
 # Set dimensions for A4 paper
 zero_x=2
@@ -69,37 +68,47 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# Function to scan a single page
+scan_page() {
+    local page_num="$1"  # Page number argument
+
+    scanimage \
+        --device "$device_name" \
+        --mode Color \
+        --resolution 300 \
+        --progress \
+        --format=tiff \
+        --source Flatbed \
+        -l "$zero_x" -t "$zero_y" \
+        -x "$width" -y "$height" \
+    | img2pdf \
+        --pagesize A4 \
+        -o "$temp_dir/page$page_num.pdf"
+}
+
+
 # Single page scan
 if [ "$single_scan" = true ]; then
     echo "Scanning a single page."
-    scanimage --device "$device_name" --mode Color --resolution 300 --progress --format=tiff --source Flatbed -l $zero_x -t $zero_y -x $width -y $height > "$temp_dir/page1.tiff"
-    #scanimage --device "$device_name" --mode Color --resolution 300 --progress --format=pnm --source Flatbed -l $zero_x -t $zero_y -x $width -y $height > "$temp_dir/page1.pnm"
+    scan_page 1
     echo "Single page scanned."
 
 # Multi-page scan
 elif [ "$multi_scan" = true ]; then
     echo "Scanning multiple pages with a flatbed scanner."
     echo "Press ENTER to scan each page. Type 'done' and press ENTER when finished."
+    
+    page_num=1
 
     while true; do
+        
+        scan_page $page_num
+        echo "Page $page_num scanned."
+        
         read -p "Press ENTER to scan page $page_num or type 'done' to finish: " user_input
         if [[ "$user_input" == "done" ]]; then
             break
         fi
-
-        # Scan page
-        #scanimage --device "$device_name" --mode Color --resolution 300 --progress --format=tiff --source Flatbed -l $zero_x -t $zero_y -x $width -y $height > "$temp_dir/page$page_num.tiff"
-        scanimage --device "$device_name" \
-            --mode Color \
-            --resolution 300 \
-            --progress \
-            --format=tiff \
-            --source Flatbed \
-            -l $zero_x -t $zero_y \
-            -x $width -y $height | img2pdf --pagesize A4 -o "$temp_dir/page$page_num.pdf"
-        echo "Page $page_num scanned."
-        #scanimage --device "$device_name" --mode Color --resolution 300 --progress --format=pnm --source Flatbed -l $zero_x -t $zero_y -x $width -y $height > "$temp_dir/page$page_num.pnm"
-        #echo "Page $page_num scanned."
 
         # Increment page count
         ((page_num++))
@@ -109,22 +118,10 @@ fi
 # Combine all scanned pages into a single PDF
 echo "Combining scanned pages into a single PDF..."
 pdfunite "$temp_dir/page"*.pdf "$output_pdf"
-#magick "$temp_dir/page*.tiff" -quality 50 -compress JPEG "$temp_dir/compressed_%03d.tiff"
-#magick "$temp_dir/page*.tiff" -density 150 -resize 70% -quality 50 -compress JPEG "$temp_dir/compressed_%03d.tiff"
-#magick "$temp_dir/compressed_*.tiff" -page A4 "$output_pdf"
-#magick "$temp_dir/page*.tiff" -normalize -level 10%,90% -despeckle -sharpen 0x1.0 -compress JPEG -quality 85 -page A4 "$output_pdf"
 
 # Run ocrmypdf to perform OCR on the PDF
 echo "Performing OCR on the PDF..."
-#ocrmypdf --output-type pdf --deskew --clean --optimize 1 --jpeg-quality 50 --jbig2-lossy "$output_pdf" "$output_pdf"
-#ocrmypdf -l eng+deu --tesseract-oem 1 --output-type pdf --clean --optimize 1 --jpeg-quality 50 --jbig2-lossy "$output_pdf" "$output_pdf"
 ocrmypdf -l eng+deu --clean --optimize 1 --jpeg-quality 50 --jbig2-lossy "$output_pdf" "$output_pdf"
 
-
-# Compress the PDF: ocrmypdf already compresses the PDF
-#compressed_pdf="compressed_$output_pdf"
-#echo "Compressing the PDF..."
-#gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.5 -dPDFSETTINGS=/printer -dNOPAUSE -dQUIET -dBATCH -sOutputFile="$compressed_pdf" "$output_pdf"
-#
-#echo "Scanning completed. Output saved as $compressed_output."
+echo "Scanning completed. Output saved as $compressed_output."
 
